@@ -4,6 +4,7 @@ import (
 	"os"
 
 	t "github.com/findsam/food-server/types"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 var Envs = initConfig()
@@ -23,6 +24,5 @@ func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value
 	}
-
 	return fallback
 }
