@@ -26,18 +26,14 @@ func NewHandler(store t.UserStore) *Handler {
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Group(func(r chi.Router) {
-		r.Route("/api/v1", func(r chi.Router) {
+		r.Route("/user", func(r chi.Router) {
 			r.Get("/", WrapHandler(h.handleCreateUser))
 		})
 	})
 }
 
 func (h *Handler) handleCreateUser(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != http.MethodGet {
-		return fmt.Errorf("method %s not allowed", r.Method)
-	}
 	ctx := r.Context()
-
 	h.store.Create(ctx, fmt.Sprintf("%s", "1"))
 	w.Write([]byte("User Created"))
 	return nil
