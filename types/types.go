@@ -2,19 +2,28 @@ package types
 
 import (
 	"context"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Config struct {
-	Env       string
-	Port      string
-	MongoURI  string
-	JWTSecret string
-	PublicURL string
-	APIKey    string
+	Env              string
+	Port             string
+	MongoURI         string
+	JWTSecret        string
+	PublicURL        string
+	APIKey           string
+	ChatGPTSecretKey string
+	ChatGPTURL       string
 }
 
 type LocationRequest struct {
 	Postcode string `json:"postcode"`
+}
+
+type RecipesRequest struct {
+	List []string `json:"list"`
 }
 
 type RegisterRequest struct {
@@ -25,5 +34,16 @@ type RegisterRequest struct {
 }
 
 type UserStore interface {
-	Create(context.Context, string) (string, error)
+	Create(context.Context, RegisterRequest) (primitive.ObjectID, error)
+	GetUserByID(context.Context, string) (*User, error)
+}
+
+type User struct {
+	ID        primitive.ObjectID `json:"id" bson:"_id"`
+	FirstName string             `json:"firstName" bson:"firstName"`
+	LastName  string             `json:"lastName" bson:"lastName"`
+	Email     string             `json:"email" bson:"email"`
+	Password  string             `json:"-" bson:"password"`
+	IsActive  bool               `json:"isActive" bson:"isActive"`
+	CreatedAt time.Time          `json:"createdAt" bson:"createdAt"`
 }

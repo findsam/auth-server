@@ -2,10 +2,9 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 
+	"github.com/findsam/food-server/auth"
 	t "github.com/findsam/food-server/types"
 	"github.com/go-chi/chi/v5"
 )
@@ -18,6 +17,12 @@ func MakeHTTPHandlerFunc(fn func(w http.ResponseWriter, r *http.Request) error) 
 	}
 }
 
+func WriteJSON(w http.ResponseWriter, status int, v interface{}) error {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(status)
+	return json.NewEncoder(w).Encode(v)
+}
+
 type Handler struct {
 	store t.UserStore
 }
@@ -28,43 +33,36 @@ func NewHandler(store t.UserStore) *Handler {
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Group(func(r chi.Router) {
-		r.Route("/user", func(r chi.Router) {
-			r.Get("/", MakeHTTPHandlerFunc(h.handleCreateUser))
-		})
-	})
-	r.Group(func(r chi.Router) {
-		r.Route("/ai", func(r chi.Router) {
-			r.Post("/", MakeHTTPHandlerFunc(h.handleLocationDetails))
+		r.Route("/users", func(r chi.Router) {
+			r.Post("/user", MakeHTTPHandlerFunc(h.handleRegister))
+			r.Get("/user/{id}", MakeHTTPHandlerFunc(h.handleGetUser))
 		})
 	})
 }
 
-func (h *Handler) handleCreateUser(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	h.store.Create(ctx, fmt.Sprintf("%s", "1"))
-	w.Write([]byte("User Created"))
-	return nil
+func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) error {
+	payload := new(t.RegisterRequest)
+	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
+		return err
+	}
+	hashedPassword, err := auth.HashPassword(payload.Password)
+	if err != nil {
+		return err
+	}
+	payload.Password = string(hashedPassword)
+	id, err := h.store.Create(r.Context(), *payload)
+	if err != nil {
+		return err
+	}
+	return WriteJSON(w, http.StatusOK, id)
 }
 
-func (h *Handler) handleLocationDetails(w http.ResponseWriter, r *http.Request) error {
-	body, err := io.ReadAll(r.Body)
+func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
+	id := chi.URLParam(r, "id")
+
+	user, err := h.store.GetUserByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return err
 	}
-	defer r.Body.Close()
-
-	locationDetails := new(t.LocationRequest)
-
-	err = json.Unmarshal(body, locationDetails)
-	if err != nil {
-		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
-		return err
-	}
-
-	postcode := locationDetails.Postcode
-	fmt.Println("Postcode:", postcode)
-
-	w.Write([]byte("Received postcode: " + postcode))
-	return nil
+	return WriteJSON(w, http.StatusOK, user)
 }

@@ -2,13 +2,15 @@ package user
 
 import (
 	"context"
-	"fmt"
 
+	t "github.com/findsam/food-server/types"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 const (
-	DbName   = "notebase"
+	DbName   = "base"
 	CollName = "users"
 )
 
@@ -20,8 +22,24 @@ func NewStore(db *mongo.Client) *Store {
 	return &Store{db: db}
 }
 
-func (s *Store) Create(ctx context.Context, email string) (string, error) {
-	// col := s.db.Database(DbName).Collection(CollName)
-	fmt.Println(email)
-	return "", nil
+func (s *Store) Create(ctx context.Context, b t.RegisterRequest) (primitive.ObjectID, error) {
+	col := s.db.Database(DbName).Collection(CollName)
+
+	newUser, err := col.InsertOne(ctx, b)
+
+	id := newUser.InsertedID.(primitive.ObjectID)
+	return id, err
+}
+
+func (s *Store) GetUserByID(ctx context.Context, id string) (*t.User, error) {
+	col := s.db.Database(DbName).Collection(CollName)
+
+	oID, _ := primitive.ObjectIDFromHex(id)
+
+	var u t.User
+	err := col.FindOne(ctx, bson.M{
+		"_id": oID,
+	}).Decode(&u)
+
+	return &u, err
 }
