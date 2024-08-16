@@ -2,7 +2,7 @@ auth-server is a lightweight auth microservice written in Go using Chi, Bcrypt, 
 
 #### Structure:
 
-- `/api` - boots up chi router.
+- `/api` - logic for booting up chi router.
 - `/user/handler` - registering user routes in chi and related controllers.
 - `/user/store` - all db logic concerning anything user related.
 - `/auth` - Authentication controllers & JWT logic.
