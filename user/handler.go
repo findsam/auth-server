@@ -1,6 +1,7 @@
 package user
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -33,7 +34,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	})
 	r.Group(func(r chi.Router) {
 		r.Route("/ai", func(r chi.Router) {
-			r.Post("/", MakeHTTPHandlerFunc(h.handleRequestDetails))
+			r.Post("/", MakeHTTPHandlerFunc(h.handleLocationDetails))
 		})
 	})
 }
@@ -45,8 +46,7 @@ func (h *Handler) handleCreateUser(w http.ResponseWriter, r *http.Request) error
 	return nil
 }
 
-func (h *Handler) handleRequestDetails(w http.ResponseWriter, r *http.Request) error {
-	// Read the body of the POST request
+func (h *Handler) handleLocationDetails(w http.ResponseWriter, r *http.Request) error {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
@@ -54,8 +54,17 @@ func (h *Handler) handleRequestDetails(w http.ResponseWriter, r *http.Request) e
 	}
 	defer r.Body.Close()
 
-	// Print the body content
-	// fmt.Fprintf(w, "Received: %s\n", string(body))
-	w.Write([]byte(string(body)))
+	locationDetails := new(t.LocationRequest)
+
+	err = json.Unmarshal(body, locationDetails)
+	if err != nil {
+		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		return err
+	}
+
+	postcode := locationDetails.Postcode
+	fmt.Println("Postcode:", postcode)
+
+	w.Write([]byte("Received postcode: " + postcode))
 	return nil
 }

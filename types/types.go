@@ -13,6 +13,10 @@ type Config struct {
 	APIKey    string
 }
 
+type LocationRequest struct {
+	Postcode string `json:"postcode"`
+}
+
 type RegisterRequest struct {
 	FirstName string `json:"firstName" bson:"firstName" validate:"required"`
 	LastName  string `json:"lastName" bson:"lastName" validate:"required"`
