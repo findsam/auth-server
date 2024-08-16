@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/findsam/food-server/auth"
@@ -64,5 +65,27 @@ func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	return WriteJSON(w, http.StatusOK, user)
+}
+
+func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodPost {
+		return fmt.Errorf("method %s not allowed", r.Method)
+	}
+
+	payload := new(t.LoginRequest)
+	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
+		return err
+	}
+
+	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
+	if err != nil {
+		return err
+	}
+
+	if !auth.ComparePasswords(user.Password, []byte(payload.Password)) {
+		return fmt.Errorf("invalid password or user does not exist")
+	}
+
 	return WriteJSON(w, http.StatusOK, user)
 }

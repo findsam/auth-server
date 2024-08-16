@@ -33,9 +33,15 @@ type RegisterRequest struct {
 	Password  string `json:"password" bson:"password" validate:"required"`
 }
 
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type UserStore interface {
 	Create(context.Context, RegisterRequest) (primitive.ObjectID, error)
 	GetUserByID(context.Context, string) (*User, error)
+	GetUserByEmail(context.Context, string) (*User, error)
 }
 
 type User struct {
