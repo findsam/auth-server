@@ -8,22 +8,10 @@ import (
 
 	"github.com/findsam/food-server/auth"
 	t "github.com/findsam/food-server/types"
+	u "github.com/findsam/food-server/util"
+
 	"github.com/go-chi/chi/v5"
 )
-
-func MakeHTTPHandlerFunc(fn func(w http.ResponseWriter, r *http.Request) error) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := fn(w, r); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	}
-}
-
-func WriteJSON(w http.ResponseWriter, status int, v interface{}) error {
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(status)
-	return json.NewEncoder(w).Encode(v)
-}
 
 type Handler struct {
 	store t.UserStore
@@ -36,10 +24,10 @@ func NewHandler(store t.UserStore) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Group(func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
-			r.Post("/user/sign-up", MakeHTTPHandlerFunc(h.handleSignUp))
-			r.Post("/user/sign-in", MakeHTTPHandlerFunc(h.handleSignIn))
-			r.Get("/user/refresh", MakeHTTPHandlerFunc(h.handleRefresh))
-			r.Get("/user/{id}", MakeHTTPHandlerFunc(h.handleGetUser))
+			r.Post("/user/sign-up", u.MakeHTTPHandlerFunc(h.handleSignUp))
+			r.Post("/user/sign-in", u.MakeHTTPHandlerFunc(h.handleSignIn))
+			r.Get("/user/refresh", u.MakeHTTPHandlerFunc(h.handleRefresh))
+			r.Get("/user/{id}", auth.WithJWTAuth(u.MakeHTTPHandlerFunc(h.handleGetUser)))
 		})
 	})
 }
@@ -58,7 +46,7 @@ func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return WriteJSON(w, http.StatusOK, id)
+	return u.WriteJSON(w, http.StatusOK, id)
 }
 
 func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
@@ -68,7 +56,7 @@ func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return WriteJSON(w, http.StatusOK, user)
+	return u.WriteJSON(w, http.StatusOK, user)
 }
 
 func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
@@ -88,7 +76,7 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return WriteJSON(w, http.StatusOK, map[string]interface{}{
+	return u.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"user": payload,
 	})
 }
@@ -101,7 +89,7 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("no cookie")
 	}
 
-	return WriteJSON(w, http.StatusOK, map[string]interface{}{
+	return u.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"cookie": cookie.Value,
 	})
 }
