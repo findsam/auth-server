@@ -87,7 +87,9 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return WriteJSON(w, http.StatusOK, payload)
+	return WriteJSON(w, http.StatusOK, map[string]interface{}{
+		"user": payload,
+	})
 }
 
 func createAndSetAuthCookies(uid string, w http.ResponseWriter) error {
