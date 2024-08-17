@@ -91,14 +91,11 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 }
 
 func createAndSetAuthCookies(uid string, w http.ResponseWriter) error {
-	accessExpiry := time.Now().Add(time.Minute * 15)
-	refreshExpiry := time.Now().Add(time.Hour * 24 * 7)
-
-	access, err := auth.CreateJWT(uid, accessExpiry.UTC().Unix())
+	access, err := auth.CreateJWT(uid, time.Now().Add(time.Minute*15).UTC().Unix())
 	if err != nil {
 		return err
 	}
-	refresh, err := auth.CreateJWT(uid, refreshExpiry.UTC().Unix())
+	refresh, err := auth.CreateJWT(uid, time.Now().Add(time.Hour*24*7).UTC().Unix())
 	if err != nil {
 		return err
 	}
