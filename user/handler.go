@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/findsam/food-server/auth"
 	t "github.com/findsam/food-server/types"
@@ -35,13 +36,14 @@ func NewHandler(store t.UserStore) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Group(func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
-			r.Post("/user", MakeHTTPHandlerFunc(h.handleRegister))
+			r.Post("/user/sign-up", MakeHTTPHandlerFunc(h.handleSignUp))
+			r.Post("/user/sign-in", MakeHTTPHandlerFunc(h.handleSignIn))
 			r.Get("/user/{id}", MakeHTTPHandlerFunc(h.handleGetUser))
 		})
 	})
 }
 
-func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) error {
+func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 	payload := new(t.RegisterRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
 		return err
@@ -68,24 +70,51 @@ func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 	return WriteJSON(w, http.StatusOK, user)
 }
 
-func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != http.MethodPost {
-		return fmt.Errorf("method %s not allowed", r.Method)
-	}
-
+func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	payload := new(t.LoginRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
 		return err
 	}
-
 	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
 	if err != nil {
 		return err
 	}
-
 	if !auth.ComparePasswords(user.Password, []byte(payload.Password)) {
 		return fmt.Errorf("invalid password or user does not exist")
 	}
 
-	return WriteJSON(w, http.StatusOK, user)
+	err = createAndSetAuthCookies(user.ID.Hex(), w)
+	if err != nil {
+		return err
+	}
+	return WriteJSON(w, http.StatusOK, payload)
+}
+
+func createAndSetAuthCookies(uid string, w http.ResponseWriter) error {
+	accessExpiry := time.Now().Add(time.Minute * 15)
+	refreshExpiry := time.Now().Add(time.Hour * 24 * 7)
+
+	access, err := auth.CreateJWT(uid, accessExpiry.UTC().Unix())
+	if err != nil {
+		return err
+	}
+	refresh, err := auth.CreateJWT(uid, refreshExpiry.UTC().Unix())
+	if err != nil {
+		return err
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refresh,
+		Path:     "/auth/refresh",
+		Secure:   true,
+		HttpOnly: true,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:  "Authorization",
+		Value: access,
+	})
+
+	return nil
 }

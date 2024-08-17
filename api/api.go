@@ -5,6 +5,7 @@ import (
 
 	"github.com/findsam/food-server/user"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -22,6 +23,7 @@ func NewAPIServer(addr string, db *mongo.Client) *APIServer {
 
 func (s *APIServer) Run() error {
 	r := chi.NewRouter()
+	r.Use(middleware.Logger)
 
 	userStore := user.NewStore(s.db)
 	userHandler := user.NewHandler(userStore)
