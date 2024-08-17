@@ -104,7 +104,7 @@ func createAndSetAuthCookies(uid string, w http.ResponseWriter) error {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
+		Name:     "Refresh",
 		Value:    refresh,
 		Path:     "/auth/refresh",
 		Secure:   true,
