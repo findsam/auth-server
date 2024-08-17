@@ -38,6 +38,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/user/sign-up", MakeHTTPHandlerFunc(h.handleSignUp))
 			r.Post("/user/sign-in", MakeHTTPHandlerFunc(h.handleSignIn))
+			r.Get("/user/refresh", MakeHTTPHandlerFunc(h.handleRefresh))
 			r.Get("/user/{id}", MakeHTTPHandlerFunc(h.handleGetUser))
 		})
 	})
@@ -92,6 +93,19 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	})
 }
 
+func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
+	fmt.Println("boh")
+
+	cookie, err := r.Cookie("Refresh")
+	if err != nil {
+		return fmt.Errorf("no cookie")
+	}
+
+	return WriteJSON(w, http.StatusOK, map[string]interface{}{
+		"cookie": cookie.Value,
+	})
+}
+
 func createAndSetAuthCookies(uid string, w http.ResponseWriter) error {
 	access, err := auth.CreateJWT(uid, time.Now().Add(time.Minute*15).UTC().Unix())
 	if err != nil {
@@ -105,13 +119,14 @@ func createAndSetAuthCookies(uid string, w http.ResponseWriter) error {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "Refresh",
 		Value:    refresh,
-		Path:     "/auth/refresh",
+		Path:     "/users/user/refresh",
 		Secure:   true,
 		HttpOnly: true,
 	})
 
 	http.SetCookie(w, &http.Cookie{
 		Name:  "Authorization",
+		Path:  "/",
 		Value: access,
 	})
 
