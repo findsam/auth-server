@@ -35,7 +35,6 @@ func CreateJWT(uid string, exp int64) (string, error) {
 func WithJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := u.GetTokenFromRequest(r)
-
 		token, err := validateJWT(tokenString)
 		if err != nil {
 			log.Printf("failed to validate token: %v", err)

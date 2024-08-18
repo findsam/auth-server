@@ -8,11 +8,11 @@ import (
 )
 
 func GetTokenFromRequest(r *http.Request) string {
-	tokenAuth := r.Header.Get("Authorization")
-	if tokenAuth != "" {
-		return tokenAuth
+	authCookie, err := r.Cookie("Authorization")
+	if err != nil {
+		return ""
 	}
-	return ""
+	return authCookie.Value
 }
 
 func MakeHTTPHandlerFunc(fn func(w http.ResponseWriter, r *http.Request) error) http.HandlerFunc {

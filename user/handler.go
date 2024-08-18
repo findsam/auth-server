@@ -26,7 +26,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			r.Post("/user/sign-up", u.MakeHTTPHandlerFunc(h.handleSignUp))
 			r.Post("/user/sign-in", u.MakeHTTPHandlerFunc(h.handleSignIn))
 			r.Get("/user/refresh", u.MakeHTTPHandlerFunc(h.handleRefresh))
-			r.Get("/user/{id}", u.MakeHTTPHandlerFunc(h.handleGetUser))
+			r.Get("/user/{id}", auth.WithJWTAuth(u.MakeHTTPHandlerFunc(h.handleGetUser)))
 		})
 	})
 }
