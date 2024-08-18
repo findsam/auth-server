@@ -11,7 +11,7 @@ import (
 )
 
 func permissionDenied(w http.ResponseWriter) {
-	u.WriteJSON(w, http.StatusUnauthorized,
+	u.JSON(w, http.StatusUnauthorized,
 		map[string]interface{}{
 			"Error": fmt.Errorf("permission denied").Error(),
 		})

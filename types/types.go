@@ -53,3 +53,7 @@ type User struct {
 	IsActive  bool               `json:"isActive" bson:"isActive"`
 	CreatedAt time.Time          `json:"createdAt" bson:"createdAt"`
 }
+
+type APIError struct {
+	Error string `json:"error"`
+}

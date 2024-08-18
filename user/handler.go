@@ -2,7 +2,6 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -27,7 +26,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			r.Post("/user/sign-up", u.MakeHTTPHandlerFunc(h.handleSignUp))
 			r.Post("/user/sign-in", u.MakeHTTPHandlerFunc(h.handleSignIn))
 			r.Get("/user/refresh", u.MakeHTTPHandlerFunc(h.handleRefresh))
-			r.Get("/user/{id}", auth.WithJWTAuth(u.MakeHTTPHandlerFunc(h.handleGetUser)))
+			r.Get("/user/{id}", u.MakeHTTPHandlerFunc(h.handleGetUser))
 		})
 	})
 }
@@ -35,61 +34,61 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 	payload := new(t.RegisterRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
-		return err
+		return u.ERROR(w, http.StatusBadRequest)
 	}
 	hashedPassword, err := auth.HashPassword(payload.Password)
 	if err != nil {
-		return err
+		return u.ERROR(w, http.StatusBadRequest)
 	}
 	payload.Password = string(hashedPassword)
 	id, err := h.store.Create(r.Context(), *payload)
+
 	if err != nil {
-		return err
+		return u.ERROR(w, http.StatusUnauthorized)
 	}
-	return u.WriteJSON(w, http.StatusOK, id)
+	return u.JSON(w, http.StatusOK, id)
 }
 
 func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-
 	user, err := h.store.GetUserByID(r.Context(), id)
+
 	if err != nil {
-		return err
+		return u.ERROR(w, http.StatusUnauthorized)
 	}
-	return u.WriteJSON(w, http.StatusOK, user)
+
+	return u.JSON(w, http.StatusOK, user)
 }
 
 func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	payload := new(t.LoginRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
-		return err
+		return u.ERROR(w, http.StatusBadRequest)
 	}
 	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
 	if err != nil {
 		return err
 	}
 	if !auth.ComparePasswords(user.Password, []byte(payload.Password)) {
-		return fmt.Errorf("invalid password or user does not exist")
+		return u.ERROR(w, http.StatusUnauthorized)
 	}
 
 	err = createAndSetAuthCookies(user.ID.Hex(), w)
 	if err != nil {
-		return err
+		return u.ERROR(w, http.StatusInternalServerError)
 	}
-	return u.WriteJSON(w, http.StatusOK, map[string]interface{}{
+	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"user": payload,
 	})
 }
 
 func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
-	fmt.Println("boh")
-
 	cookie, err := r.Cookie("Refresh")
 	if err != nil {
-		return fmt.Errorf("no cookie")
-	}
+		return u.ERROR(w, http.StatusBadRequest)
 
-	return u.WriteJSON(w, http.StatusOK, map[string]interface{}{
+	}
+	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"cookie": cookie.Value,
 	})
 }
@@ -97,11 +96,11 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 func createAndSetAuthCookies(uid string, w http.ResponseWriter) error {
 	access, err := auth.CreateJWT(uid, time.Now().Add(time.Minute*15).UTC().Unix())
 	if err != nil {
-		return err
+		return u.ERROR(w, http.StatusInternalServerError)
 	}
 	refresh, err := auth.CreateJWT(uid, time.Now().Add(time.Hour*24*7).UTC().Unix())
 	if err != nil {
-		return err
+		return u.ERROR(w, http.StatusInternalServerError)
 	}
 
 	http.SetCookie(w, &http.Cookie{
