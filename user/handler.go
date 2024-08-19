@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -79,8 +80,11 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return u.ERROR(w, http.StatusInternalServerError)
 	}
+
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"user": payload,
+		"results":      []*t.User{user},
+		"toastMessage": fmt.Sprintf("Successfully logged in as: %s", payload.Email),
+		"status":       http.StatusOK,
 	})
 }
 
