@@ -59,7 +59,9 @@ func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"results": user,
+		"results":      []*t.User{user},
+		"toastMessage": fmt.Sprintf("Successfully fetched: %s", id),
+		"status":       http.StatusOK,
 	})
 }
 
@@ -70,7 +72,7 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	}
 	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
 	if err != nil {
-		return err
+		return u.ERROR(w, http.StatusUnauthorized)
 	}
 	if !auth.ComparePasswords(user.Password, []byte(payload.Password)) {
 		return u.ERROR(w, http.StatusUnauthorized)
