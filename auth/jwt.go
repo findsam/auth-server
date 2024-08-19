@@ -10,13 +10,6 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func permissionDenied(w http.ResponseWriter) {
-	u.JSON(w, http.StatusUnauthorized,
-		map[string]interface{}{
-			"Error": fmt.Errorf("permission denied").Error(),
-		})
-}
-
 func CreateJWT(uid string, exp int64) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": uid,
@@ -32,19 +25,19 @@ func CreateJWT(uid string, exp int64) (string, error) {
 	return str, err
 }
 
-func WithJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
+func WithJWT(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := u.GetTokenFromRequest(r)
 		token, err := validateJWT(tokenString)
 		if err != nil {
 			log.Printf("failed to validate token: %v", err)
-			permissionDenied(w)
+			u.ERROR(w, http.StatusUnauthorized)
 			return
 		}
 
 		if !token.Valid {
 			log.Println("invalid token")
-			permissionDenied(w)
+			u.ERROR(w, http.StatusUnauthorized)
 			return
 		}
 

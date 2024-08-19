@@ -26,7 +26,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			r.Post("/user/sign-up", u.MakeHTTPHandlerFunc(h.handleSignUp))
 			r.Post("/user/sign-in", u.MakeHTTPHandlerFunc(h.handleSignIn))
 			r.Get("/user/refresh", u.MakeHTTPHandlerFunc(h.handleRefresh))
-			r.Get("/user/{id}", auth.WithJWTAuth(u.MakeHTTPHandlerFunc(h.handleGetUser)))
+			r.Get("/user/{id}", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleGetUser)))
 		})
 	})
 }
@@ -57,7 +57,9 @@ func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 		return u.ERROR(w, http.StatusUnauthorized)
 	}
 
-	return u.JSON(w, http.StatusOK, user)
+	return u.JSON(w, http.StatusOK, map[string]interface{}{
+		"results": user,
+	})
 }
 
 func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
