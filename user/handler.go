@@ -42,12 +42,15 @@ func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 		return u.ERROR(w, http.StatusBadRequest)
 	}
 	payload.Password = string(hashedPassword)
-	id, err := h.store.Create(r.Context(), *payload)
+	_, err = h.store.Create(r.Context(), *payload)
 
 	if err != nil {
 		return u.ERROR(w, http.StatusUnauthorized)
 	}
-	return u.JSON(w, http.StatusOK, id)
+	return u.JSON(w, http.StatusOK, map[string]interface{}{
+		"message": fmt.Sprintf("Successfully created: %s", payload.Email),
+		"status":  http.StatusOK,
+	})
 }
 
 func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
@@ -59,9 +62,9 @@ func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"results":      []*t.User{user},
-		"toastMessage": fmt.Sprintf("Successfully fetched: %s", id),
-		"status":       http.StatusOK,
+		"results": []*t.User{user},
+		"message": fmt.Sprintf("Successfully fetched: %s", id),
+		"status":  http.StatusOK,
 	})
 }
 
@@ -72,7 +75,7 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	}
 	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
 	if err != nil {
-		return u.ERROR(w, http.StatusUnauthorized)
+		return u.ERROR(w, http.StatusNoContent)
 	}
 	if !auth.ComparePasswords(user.Password, []byte(payload.Password)) {
 		return u.ERROR(w, http.StatusUnauthorized)
@@ -84,9 +87,9 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"results":      []*t.User{user},
-		"toastMessage": fmt.Sprintf("Successfully logged in as: %s", payload.Email),
-		"status":       http.StatusOK,
+		"results": []*t.User{user},
+		"message": fmt.Sprintf("Successfully logged in as: %s", payload.Email),
+		"status":  http.StatusOK,
 	})
 }
 
