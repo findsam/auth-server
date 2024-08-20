@@ -22,6 +22,7 @@ func MakeHTTPHandlerFunc(fn func(w http.ResponseWriter, r *http.Request) error) 
 		}
 	}
 }
+
 func JSON(w http.ResponseWriter, status int, v interface{}) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)

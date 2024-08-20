@@ -75,19 +75,21 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	}
 	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
 	if err != nil {
-		return u.ERROR(w, http.StatusNoContent)
+		return u.ERROR(w, http.StatusBadRequest)
 	}
+
 	if !auth.ComparePasswords(user.Password, []byte(payload.Password)) {
 		return u.ERROR(w, http.StatusUnauthorized)
 	}
+	access, err := createAndSetAuthCookies(user.ID.Hex(), w)
 
-	err = createAndSetAuthCookies(user.ID.Hex(), w)
 	if err != nil {
 		return u.ERROR(w, http.StatusInternalServerError)
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"results": []*t.User{user},
+		"token":   access,
 		"message": fmt.Sprintf("Successfully logged in as: %s", payload.Email),
 		"status":  http.StatusOK,
 	})
@@ -104,14 +106,14 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 	})
 }
 
-func createAndSetAuthCookies(uid string, w http.ResponseWriter) error {
+func createAndSetAuthCookies(uid string, w http.ResponseWriter) (string, error) {
 	access, err := auth.CreateJWT(uid, time.Now().Add(time.Minute*15).UTC().Unix())
 	if err != nil {
-		return u.ERROR(w, http.StatusInternalServerError)
+		return "", u.ERROR(w, http.StatusInternalServerError)
 	}
 	refresh, err := auth.CreateJWT(uid, time.Now().Add(time.Hour*24*7).UTC().Unix())
 	if err != nil {
-		return u.ERROR(w, http.StatusInternalServerError)
+		return "", u.ERROR(w, http.StatusInternalServerError)
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -122,11 +124,5 @@ func createAndSetAuthCookies(uid string, w http.ResponseWriter) error {
 		HttpOnly: true,
 	})
 
-	http.SetCookie(w, &http.Cookie{
-		Name:  "Authorization",
-		Path:  "/",
-		Value: access,
-	})
-
-	return nil
+	return access, nil
 }
