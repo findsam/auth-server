@@ -27,7 +27,7 @@ func CreateJWT(uid string, exp int64) (string, error) {
 func WithJWT(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := u.GetTokenFromRequest(r)
-		token, err := validateJWT(tokenString)
+		token, err := ValidateJWT(tokenString)
 		if err != nil {
 			u.ERROR(w, http.StatusUnauthorized)
 			return
@@ -42,7 +42,7 @@ func WithJWT(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func validateJWT(tokenString string) (*jwt.Token, error) {
+func ValidateJWT(tokenString string) (*jwt.Token, error) {
 	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])

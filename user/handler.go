@@ -9,6 +9,7 @@ import (
 	"github.com/findsam/food-server/auth"
 	t "github.com/findsam/food-server/types"
 	u "github.com/findsam/food-server/util"
+	"github.com/golang-jwt/jwt"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -96,21 +97,27 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
-	/**
-	TODO: Handle logic for checking if a refresh token is valid etc.
-	*/
 	cookie, err := r.Cookie("refresh")
 	if err != nil {
 		return u.ERROR(w, http.StatusInternalServerError)
 	}
-	fmt.Println("Refresh:", cookie)
-	access, err := createAndSetAuthCookies("1", w)
+
+	refresh, err := auth.ValidateJWT(cookie.Value)
+	if err != nil || !refresh.Valid {
+		return u.ERROR(w, http.StatusInternalServerError)
+	}
+
+	claims := refresh.Claims.(jwt.MapClaims)
+	uid := claims["sub"]
+	access, err := createAndSetAuthCookies(uid.(string), w)
+
 	if err != nil {
 		return u.ERROR(w, http.StatusInternalServerError)
 	}
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"token":            access,
 		"developmentToken": cookie.Value,
+		"userId":           uid,
 	})
 }
 
