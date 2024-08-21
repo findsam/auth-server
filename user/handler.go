@@ -99,12 +99,18 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 	/**
 	TODO: Handle logic for checking if a refresh token is valid etc.
 	*/
+	cookie, err := r.Cookie("refresh")
+	if err != nil {
+		return u.ERROR(w, http.StatusInternalServerError)
+	}
+	fmt.Println("Refresh:", cookie)
 	access, err := createAndSetAuthCookies("1", w)
 	if err != nil {
 		return u.ERROR(w, http.StatusInternalServerError)
 	}
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"token": access,
+		"token":            access,
+		"developmentToken": cookie.Value,
 	})
 }
 
@@ -119,7 +125,7 @@ func createAndSetAuthCookies(uid string, w http.ResponseWriter) (string, error) 
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "Refresh",
+		Name:     "refresh",
 		Value:    refresh,
 		Path:     "/users/user/refresh",
 		Secure:   true,
