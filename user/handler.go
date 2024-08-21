@@ -81,8 +81,8 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	if !auth.ComparePasswords(user.Password, []byte(payload.Password)) {
 		return u.ERROR(w, http.StatusUnauthorized)
 	}
-	access, err := createAndSetAuthCookies(user.ID.Hex(), w)
 
+	access, err := createAndSetAuthCookies(user.ID.Hex(), w)
 	if err != nil {
 		return u.ERROR(w, http.StatusInternalServerError)
 	}
@@ -96,18 +96,20 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
-	cookie, err := r.Cookie("Refresh")
+	/**
+	TODO: Handle logic for checking if a refresh token is valid etc.
+	*/
+	access, err := createAndSetAuthCookies("1", w)
 	if err != nil {
-		return u.ERROR(w, http.StatusBadRequest)
-
+		return u.ERROR(w, http.StatusInternalServerError)
 	}
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"cookie": cookie.Value,
+		"token": access,
 	})
 }
 
 func createAndSetAuthCookies(uid string, w http.ResponseWriter) (string, error) {
-	access, err := auth.CreateJWT(uid, time.Now().Add(time.Minute*15).UTC().Unix())
+	access, err := auth.CreateJWT(uid, time.Now().Add(time.Second*10).UTC().Unix())
 	if err != nil {
 		return "", u.ERROR(w, http.StatusInternalServerError)
 	}

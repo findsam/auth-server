@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -50,8 +49,6 @@ type User struct {
 	LastName  string             `json:"lastName" bson:"lastName"`
 	Email     string             `json:"email" bson:"email"`
 	Password  string             `json:"-" bson:"password"`
-	IsActive  bool               `json:"isActive" bson:"isActive"`
-	CreatedAt time.Time          `json:"createdAt" bson:"createdAt"`
 }
 
 type APIError struct {

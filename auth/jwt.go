@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/findsam/food-server/config"
@@ -30,13 +29,11 @@ func WithJWT(handlerFunc http.HandlerFunc) http.HandlerFunc {
 		tokenString := u.GetTokenFromRequest(r)
 		token, err := validateJWT(tokenString)
 		if err != nil {
-			log.Printf("failed to validate token: %v", err)
 			u.ERROR(w, http.StatusUnauthorized)
 			return
 		}
 
 		if !token.Valid {
-			log.Println("invalid token")
 			u.ERROR(w, http.StatusUnauthorized)
 			return
 		}
