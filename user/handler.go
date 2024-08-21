@@ -114,10 +114,9 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return u.ERROR(w, http.StatusInternalServerError)
 	}
+
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"token":            access,
-		"developmentToken": cookie.Value,
-		"userId":           uid,
+		"token": access,
 	})
 }
 
