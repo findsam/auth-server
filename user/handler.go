@@ -36,18 +36,41 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 	payload := new(t.RegisterRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
-		return u.ERROR(w, http.StatusBadRequest)
+		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"message": "Server error occured",
+		})
 	}
+
+	existingUser, err := h.store.GetUserByEmail(r.Context(), payload.Email)
+
+	if err != nil {
+		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"message": "Server error occured",
+		})
+	}
+
+	if existingUser != nil {
+		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"message": fmt.Sprintf("An error with %s that email already exists", payload.Email),
+		})
+	}
+
 	hashedPassword, err := auth.HashPassword(payload.Password)
 	if err != nil {
-		return u.ERROR(w, http.StatusBadRequest)
+		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"message": "Server error occured",
+		})
 	}
+
 	payload.Password = string(hashedPassword)
 	_, err = h.store.Create(r.Context(), *payload)
 
 	if err != nil {
-		return u.ERROR(w, http.StatusUnauthorized)
+		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"message": "Server error occured",
+		})
 	}
+
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"message": fmt.Sprintf("Successfully created: %s", payload.Email),
 		"status":  http.StatusOK,
