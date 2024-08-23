@@ -29,6 +29,7 @@ func WithJWT(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := u.GetTokenFromRequest(r)
 		token, err := ValidateJWT(tokenString)
+
 		if err != nil {
 			u.ERROR(w, ge.Internal)
 			return

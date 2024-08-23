@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 
 	t "github.com/findsam/food-server/types"
 	"go.mongodb.org/mongo-driver/bson"
@@ -37,23 +38,25 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*t.User, erro
 
 	err := col.FindOne(ctx, bson.M{
 		"email": email,
-	}).Decode(&u)
-
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
-	}
+	}).Decode(u)
 
 	return u, err
 }
 
 func (s *Store) GetUserByID(ctx context.Context, id string) (*t.User, error) {
 	col := s.db.Database(DbName).Collection(CollName)
-	oID, _ := primitive.ObjectIDFromHex(id)
+	oID, err := primitive.ObjectIDFromHex(id)
 
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(oID)
 	u := new(t.User)
-	err := col.FindOne(ctx, bson.M{
+
+	err = col.FindOne(ctx, bson.M{
 		"_id": oID,
-	}).Decode(&u)
+	}).Decode(u)
 
 	return u, err
 }
