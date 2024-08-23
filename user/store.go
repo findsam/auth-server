@@ -39,6 +39,10 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*t.User, erro
 		"email": email,
 	}).Decode(&u)
 
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+
 	return u, err
 }
 

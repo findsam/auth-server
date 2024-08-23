@@ -90,8 +90,6 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
-	fmt.Println(user)
-	fmt.Println(err)
 	if err != nil {
 		return u.ERROR(w, ge.Internal)
 	}

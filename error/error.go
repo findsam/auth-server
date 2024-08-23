@@ -27,5 +27,5 @@ var (
 	IncorrectCredentials = New("No user matches those credentials", http.StatusBadRequest)
 	EmailExists          = New("A user with that email already exists", http.StatusBadRequest)
 	Unauthorized         = New("Unauthorized request", http.StatusUnauthorized)
-	UserNotFound         = New("No user was found", http.StatusNoContent)
+	UserNotFound         = New("No user was found", http.StatusBadRequest)
 )
