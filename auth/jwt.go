@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/findsam/food-server/config"
+	ge "github.com/findsam/food-server/error"
 	u "github.com/findsam/food-server/util"
 	"github.com/golang-jwt/jwt"
 )
@@ -29,12 +30,12 @@ func WithJWT(handlerFunc http.HandlerFunc) http.HandlerFunc {
 		tokenString := u.GetTokenFromRequest(r)
 		token, err := ValidateJWT(tokenString)
 		if err != nil {
-			u.ERROR(w, http.StatusUnauthorized)
+			u.ERROR(w, ge.Internal)
 			return
 		}
 
 		if !token.Valid {
-			u.ERROR(w, http.StatusUnauthorized)
+			u.ERROR(w, ge.Internal)
 			return
 		}
 

@@ -1,4 +1,4 @@
-package ce
+package ge
 
 import (
 	"net/http"
@@ -25,4 +25,7 @@ var (
 	NotFound             = New("Resource Not Found", http.StatusNotFound)
 	BadRequest           = New("Bad Request", http.StatusBadRequest)
 	IncorrectCredentials = New("No user matches those credentials", http.StatusBadRequest)
+	EmailExists          = New("A user with that email already exists", http.StatusBadRequest)
+	Unauthorized         = New("Unauthorized request", http.StatusUnauthorized)
+	UserNotFound         = New("No user was found", http.StatusNoContent)
 )

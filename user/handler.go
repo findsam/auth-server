@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/findsam/food-server/auth"
+	ge "github.com/findsam/food-server/error"
 	t "github.com/findsam/food-server/types"
 	u "github.com/findsam/food-server/util"
 	"github.com/golang-jwt/jwt"
@@ -36,37 +37,29 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 	payload := new(t.RegisterRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
-		return errors.Get("InternalServerError")
+		return u.ERROR(w, ge.Internal)
 	}
 
 	existingUser, err := h.store.GetUserByEmail(r.Context(), payload.Email)
 
 	if err != nil {
-		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"message": "Server error occured",
-		})
+		return u.ERROR(w, ge.Internal)
 	}
 
 	if existingUser != nil {
-		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"message": fmt.Sprintf("An error with %s that email already exists", payload.Email),
-		})
+		return u.ERROR(w, ge.EmailExists)
 	}
 
 	hashedPassword, err := auth.HashPassword(payload.Password)
 	if err != nil {
-		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"message": "Server error occured",
-		})
+		return u.ERROR(w, ge.Internal)
 	}
 
 	payload.Password = string(hashedPassword)
 	_, err = h.store.Create(r.Context(), *payload)
 
 	if err != nil {
-		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"message": "Server error occured",
-		})
+		return u.ERROR(w, ge.Internal)
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
@@ -80,7 +73,7 @@ func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 	user, err := h.store.GetUserByID(r.Context(), id)
 
 	if err != nil {
-		return u.ERROR(w, http.StatusUnauthorized)
+		return u.ERROR(w, ge.Unauthorized)
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
@@ -93,27 +86,27 @@ func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	payload := new(t.LoginRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
-		return u.ERROR(w, http.StatusBadRequest)
+		return u.ERROR(w, ge.Internal)
 	}
 
 	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
+	fmt.Println(user)
+	fmt.Println(err)
 	if err != nil {
-		return u.ERROR(w, http.StatusBadRequest)
+		return u.ERROR(w, ge.Internal)
 	}
 
 	if user == nil {
-		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"message": fmt.Sprintf("No user with the email %s exists.", payload.Email),
-		})
+		return u.ERROR(w, ge.UserNotFound)
 	}
 
 	if !auth.ComparePasswords(user.Password, []byte(payload.Password)) {
-		return u.ERROR(w, http.StatusUnauthorized)
+		return u.ERROR(w, ge.IncorrectCredentials)
 	}
 
 	access, err := createAndSetAuthCookies(user.ID.Hex(), w)
 	if err != nil {
-		return u.ERROR(w, http.StatusInternalServerError)
+		return u.ERROR(w, ge.Internal)
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
@@ -127,12 +120,12 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 	cookie, err := r.Cookie("refresh")
 	if err != nil {
-		return u.ERROR(w, http.StatusInternalServerError)
+		return u.ERROR(w, ge.Internal)
 	}
 
 	refresh, err := auth.ValidateJWT(cookie.Value)
 	if err != nil || !refresh.Valid {
-		return u.ERROR(w, http.StatusInternalServerError)
+		return u.ERROR(w, ge.Internal)
 	}
 
 	claims := refresh.Claims.(jwt.MapClaims)
@@ -140,7 +133,7 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 	access, err := createAndSetAuthCookies(uid.(string), w)
 
 	if err != nil {
-		return u.ERROR(w, http.StatusInternalServerError)
+		return u.ERROR(w, ge.Internal)
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
@@ -151,11 +144,11 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 func createAndSetAuthCookies(uid string, w http.ResponseWriter) (string, error) {
 	access, err := auth.CreateJWT(uid, time.Now().Add(time.Second*10).UTC().Unix())
 	if err != nil {
-		return "", u.ERROR(w, http.StatusInternalServerError)
+		return "", u.ERROR(w, ge.Internal)
 	}
 	refresh, err := auth.CreateJWT(uid, time.Now().Add(time.Hour*24*7).UTC().Unix())
 	if err != nil {
-		return "", u.ERROR(w, http.StatusInternalServerError)
+		return "", u.ERROR(w, ge.Internal)
 	}
 
 	http.SetCookie(w, &http.Cookie{

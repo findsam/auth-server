@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	errors "github.com/findsam/food-server/error"
+	ge "github.com/findsam/food-server/error"
 )
 
 func GetTokenFromRequest(r *http.Request) string {
@@ -29,11 +29,10 @@ func JSON(w http.ResponseWriter, status int, v interface{}) error {
 	return json.NewEncoder(w).Encode(v)
 }
 
-func ERROR(w http.ResponseWriter, status int) error {
+func ERROR(w http.ResponseWriter, e *ge.CustomError) error {
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(status)
+	w.WriteHeader(e.StatusCode)
 	return json.NewEncoder(w).Encode(map[string]interface{}{
-		"error":  errors.Message(status),
-		"status": status,
+		"error": e.Message,
 	})
 }
