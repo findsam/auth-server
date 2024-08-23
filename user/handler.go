@@ -36,9 +36,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 	payload := new(t.RegisterRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
-		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"message": "Server error occured",
-		})
+		return errors.Get("InternalServerError")
 	}
 
 	existingUser, err := h.store.GetUserByEmail(r.Context(), payload.Email)
@@ -97,9 +95,16 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
 		return u.ERROR(w, http.StatusBadRequest)
 	}
+
 	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
 	if err != nil {
 		return u.ERROR(w, http.StatusBadRequest)
+	}
+
+	if user == nil {
+		return u.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"message": fmt.Sprintf("No user with the email %s exists.", payload.Email),
+		})
 	}
 
 	if !auth.ComparePasswords(user.Password, []byte(payload.Password)) {

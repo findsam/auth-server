@@ -34,13 +34,10 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*t.User, erro
 	col := s.db.Database(DbName).Collection(CollName)
 
 	u := new(t.User)
+
 	err := col.FindOne(ctx, bson.M{
 		"email": email,
 	}).Decode(&u)
-
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
-	}
 
 	return u, err
 }
@@ -53,10 +50,6 @@ func (s *Store) GetUserByID(ctx context.Context, id string) (*t.User, error) {
 	err := col.FindOne(ctx, bson.M{
 		"_id": oID,
 	}).Decode(&u)
-
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
-	}
 
 	return u, err
 }
