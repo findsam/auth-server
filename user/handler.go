@@ -63,8 +63,7 @@ func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"message": fmt.Sprintf("Successfully created: %s", payload.Email),
-		"status":  http.StatusOK,
+		"message": fmt.Sprintf("Please verify your email address: %s", payload.Email),
 	})
 }
 
@@ -79,7 +78,6 @@ func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"results": []*t.User{user},
 		"message": fmt.Sprintf("Successfully fetched: %s", id),
-		"status":  http.StatusOK,
 	})
 }
 
@@ -90,6 +88,7 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
+
 	if err != nil {
 		return u.ERROR(w, ge.Internal)
 	}
@@ -103,6 +102,7 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	access, err := createAndSetAuthCookies(user.ID.Hex(), w)
+
 	if err != nil {
 		return u.ERROR(w, ge.Internal)
 	}
@@ -111,7 +111,6 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 		"results": []*t.User{user},
 		"token":   access,
 		"message": fmt.Sprintf("Successfully logged in as: %s", payload.Email),
-		"status":  http.StatusOK,
 	})
 }
 

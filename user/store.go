@@ -40,6 +40,10 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*t.User, erro
 		"email": email,
 	}).Decode(u)
 
+	if primitive.ObjectID.IsZero(u.ID) {
+		return nil, nil
+	}
+
 	return u, err
 }
 
@@ -57,6 +61,10 @@ func (s *Store) GetUserByID(ctx context.Context, id string) (*t.User, error) {
 	err = col.FindOne(ctx, bson.M{
 		"_id": oID,
 	}).Decode(u)
+
+	if primitive.ObjectID.IsZero(u.ID) {
+		return nil, nil
+	}
 
 	return u, err
 }

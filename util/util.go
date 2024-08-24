@@ -33,6 +33,6 @@ func ERROR(w http.ResponseWriter, e *ge.CustomError) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(e.StatusCode)
 	return json.NewEncoder(w).Encode(map[string]interface{}{
-		"error": e.Message,
+		"message": e.Message,
 	})
 }
