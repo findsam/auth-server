@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"fmt"
 
 	t "github.com/findsam/food-server/types"
 	"go.mongodb.org/mongo-driver/bson"
@@ -55,7 +54,6 @@ func (s *Store) GetUserByID(ctx context.Context, id string) (*t.User, error) {
 		return nil, err
 	}
 
-	fmt.Println(oID)
 	u := new(t.User)
 
 	err = col.FindOne(ctx, bson.M{

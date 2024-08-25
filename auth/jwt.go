@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -9,6 +10,12 @@ import (
 	u "github.com/findsam/food-server/util"
 	"github.com/golang-jwt/jwt"
 )
+
+func ReadJWT(t *jwt.Token) string {
+	claims := t.Claims.(jwt.MapClaims)
+	uid := claims["sub"].(string)
+	return uid
+}
 
 func CreateJWT(uid string, exp int64) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -40,7 +47,8 @@ func WithJWT(handlerFunc http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		handlerFunc(w, r)
+		ctx := context.WithValue(r.Context(), "uid", ReadJWT(token))
+		handlerFunc(w, r.WithContext(ctx))
 	}
 }
 

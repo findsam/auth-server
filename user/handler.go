@@ -30,6 +30,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			r.Post("/user/sign-in", u.MakeHTTPHandlerFunc(h.handleSignIn))
 			r.Get("/user/refresh", u.MakeHTTPHandlerFunc(h.handleRefresh))
 			r.Get("/user/{id}", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleGetUser)))
+			r.Get("/user", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleSelf)))
+
 		})
 	})
 }
@@ -78,6 +80,20 @@ func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"results": []*t.User{user},
 		"message": fmt.Sprintf("Successfully fetched: %s", id),
+	})
+}
+
+func (h *Handler) handleSelf(w http.ResponseWriter, r *http.Request) error {
+	uid := r.Context().Value("uid").(string)
+	user, err := h.store.GetUserByID(r.Context(), uid)
+
+	if err != nil {
+		return u.ERROR(w, ge.Internal)
+	}
+
+	return u.JSON(w, http.StatusOK, map[string]interface{}{
+		"results": []*t.User{user},
+		"message": fmt.Sprintf("Successfully fetched: %s", uid),
 	})
 }
 
