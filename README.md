@@ -1,4 +1,4 @@
-auth-server is a lightweight auth microservice written in Go using Chi, Bcrypt, & JWT.
+auth-server is a lightweight microservice written in Go using Chi, Bcrypt, & JWT.
 
 #### Structure:
 

@@ -24,13 +24,13 @@ func NewStore(db *mongo.Client) *Store {
 }
 
 func (s *Store) Create(ctx context.Context, b t.RegisterRequest) (primitive.ObjectID, error) {
-	col := s.db.Database(DbName).Collection(CollName)
 	user, err := auth.NewAccount(b)
 
 	if err != nil {
 		return primitive.NilObjectID, err
 	}
 
+	col := s.db.Database(DbName).Collection(CollName)
 	newUser, err := col.InsertOne(ctx, user)
 
 	id := newUser.InsertedID.(primitive.ObjectID)
