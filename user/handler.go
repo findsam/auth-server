@@ -10,7 +10,6 @@ import (
 	ge "github.com/findsam/food-server/error"
 	t "github.com/findsam/food-server/types"
 	u "github.com/findsam/food-server/util"
-	"github.com/golang-jwt/jwt"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -141,10 +140,11 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 		return u.ERROR(w, ge.Internal)
 	}
 
-	claims := refresh.Claims.(jwt.MapClaims)
-	uid := claims["sub"]
-	access, err := createAndSetAuthCookies(uid.(string), w)
+	// claims := refresh.Claims.(jwt.MapClaims)
+	// uid := claims["sub"].(string)
 
+	uid := auth.ReadJWT(refresh)
+	access, err := createAndSetAuthCookies(uid, w)
 	if err != nil {
 		return u.ERROR(w, ge.Internal)
 	}
