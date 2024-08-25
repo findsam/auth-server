@@ -51,14 +51,6 @@ func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 		return u.ERROR(w, ge.EmailExists)
 	}
 
-	hashedPassword, err := auth.HashPassword(payload.Password)
-	if err != nil {
-		return u.ERROR(w, ge.Internal)
-	}
-
-	payload.Password = string(hashedPassword)
-	payload.FirstName = u.CapitalizeFirstLetter(payload.FirstName)
-	payload.LastName = u.CapitalizeFirstLetter(payload.LastName)
 	_, err = h.store.Create(r.Context(), *payload)
 
 	if err != nil {

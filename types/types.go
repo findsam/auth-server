@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -43,10 +44,22 @@ type UserStore interface {
 	GetUserByEmail(context.Context, string) (*User, error)
 }
 
+type UserSecurity struct {
+	EmailVerified bool  `json:"emailVerified" bson:"emailVerified"`
+	HasTwoFactor  bool  `json:"hasTwoFactor" bson:"hasTwoFactor"`
+	TwoFactorCode int32 `json:"twoFactorCode" bson:"twoFactorCode"`
+}
+
+type UserMeta struct {
+	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
+}
+
 type User struct {
 	ID        primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	FirstName string             `json:"firstName" bson:"firstName"`
 	LastName  string             `json:"lastName" bson:"lastName"`
 	Email     string             `json:"email" bson:"email"`
 	Password  string             `json:"-" bson:"password"`
+	Security  UserSecurity       `json:"security" bson:"security"`
+	Meta      UserMeta           `json:"meta" bson:"meta"`
 }

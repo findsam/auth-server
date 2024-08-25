@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/findsam/food-server/auth"
 	t "github.com/findsam/food-server/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -24,7 +25,13 @@ func NewStore(db *mongo.Client) *Store {
 
 func (s *Store) Create(ctx context.Context, b t.RegisterRequest) (primitive.ObjectID, error) {
 	col := s.db.Database(DbName).Collection(CollName)
-	newUser, err := col.InsertOne(ctx, b)
+	user, err := auth.NewAccount(b)
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	newUser, err := col.InsertOne(ctx, user)
 
 	id := newUser.InsertedID.(primitive.ObjectID)
 	return id, err
