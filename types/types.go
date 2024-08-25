@@ -18,14 +18,6 @@ type Config struct {
 	ChatGPTURL       string
 }
 
-type LocationRequest struct {
-	Postcode string `json:"postcode"`
-}
-
-type RecipesRequest struct {
-	List []string `json:"list"`
-}
-
 type RegisterRequest struct {
 	FirstName string `json:"firstName" bson:"firstName" validate:"required"`
 	LastName  string `json:"lastName" bson:"lastName" validate:"required"`

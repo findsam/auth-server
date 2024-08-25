@@ -30,7 +30,6 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			r.Get("/user/refresh", u.MakeHTTPHandlerFunc(h.handleRefresh))
 			r.Get("/user/{id}", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleGetUser)))
 			r.Get("/user", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleSelf)))
-
 		})
 	})
 }
@@ -146,7 +145,7 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 }
 
 func createAndSetAuthCookies(uid string, w http.ResponseWriter) (string, error) {
-	access, err := auth.CreateJWT(uid, time.Now().Add(time.Second*10).UTC().Unix())
+	access, err := auth.CreateJWT(uid, time.Now().Add(time.Minute*10).UTC().Unix())
 	if err != nil {
 		return "", u.ERROR(w, ge.Internal)
 	}
