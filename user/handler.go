@@ -140,9 +140,6 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 		return u.ERROR(w, ge.Internal)
 	}
 
-	// claims := refresh.Claims.(jwt.MapClaims)
-	// uid := claims["sub"].(string)
-
 	uid := auth.ReadJWT(refresh)
 	access, err := createAndSetAuthCookies(uid, w)
 	if err != nil {
