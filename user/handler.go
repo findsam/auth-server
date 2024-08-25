@@ -57,6 +57,8 @@ func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	payload.Password = string(hashedPassword)
+	payload.FirstName = u.CapitalizeFirstLetter(payload.FirstName)
+	payload.LastName = u.CapitalizeFirstLetter(payload.LastName)
 	_, err = h.store.Create(r.Context(), *payload)
 
 	if err != nil {

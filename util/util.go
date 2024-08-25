@@ -3,6 +3,7 @@ package util
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	ge "github.com/findsam/food-server/error"
 )
@@ -35,4 +36,11 @@ func ERROR(w http.ResponseWriter, e *ge.CustomError) error {
 	return json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": e.Message,
 	})
+}
+
+func CapitalizeFirstLetter(s string) string {
+	if len(s) == 0 {
+		return ""
+	}
+	return strings.ToUpper(string(s[0])) + s[1:]
 }
