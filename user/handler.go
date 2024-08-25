@@ -25,6 +25,8 @@ func NewHandler(store t.UserStore) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Group(func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
+			r.Put("/user/confirm-reset-password", u.MakeHTTPHandlerFunc(h.handleConfirmResetPassword))
+			r.Put("/user/reset-password", u.MakeHTTPHandlerFunc(h.handlePreResetPassword))
 			r.Post("/user/sign-up", u.MakeHTTPHandlerFunc(h.handleSignUp))
 			r.Post("/user/sign-in", u.MakeHTTPHandlerFunc(h.handleSignIn))
 			r.Get("/user/refresh", u.MakeHTTPHandlerFunc(h.handleRefresh))
@@ -141,6 +143,70 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"token": access,
+	})
+}
+
+func (h *Handler) handlePreResetPassword(w http.ResponseWriter, r *http.Request) error {
+	/*********************************
+	TODO: Send email to email sent in the payload, this will include a token with a 5 minute expiry
+	linking to /account/reset-password/:token
+
+	NOTES: Remember to remove --token from this response once testing is complete :')
+	*********************************/
+	payload := new(t.ResetPasswordRequest)
+	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
+		return u.ERROR(w, ge.Internal)
+	}
+
+	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
+
+	if err != nil {
+		return u.ERROR(w, ge.Internal)
+	}
+
+	if user == nil {
+		return u.ERROR(w, ge.UserNotFound)
+	}
+
+	token, err := auth.CreateJWT(payload.Email, time.Now().Add(time.Minute*5).UTC().Unix())
+	if err != nil {
+		return u.ERROR(w, ge.Internal)
+	}
+
+	return u.JSON(w, http.StatusOK, map[string]interface{}{
+		"--token": token,
+		"message": fmt.Sprintf("Password reset email sent to %s", payload.Email),
+	})
+}
+
+func (h *Handler) handleConfirmResetPassword(w http.ResponseWriter, r *http.Request) error {
+	/*********************************
+	TODO: Implement update functionality for user accounts as this has not yet been done.
+	*********************************/
+	payload := new(t.ConfirmResetPasswordRequest)
+	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
+		return u.ERROR(w, ge.Internal)
+	}
+
+	token, err := auth.ValidateJWT(payload.Token)
+	if err != nil || !token.Valid {
+		return u.ERROR(w, ge.Internal)
+	}
+
+	email := auth.ReadJWT(token)
+	user, err := h.store.GetUserByEmail(r.Context(), email)
+
+	if err != nil {
+		return u.ERROR(w, ge.Internal)
+	}
+
+	if user == nil {
+		return u.ERROR(w, ge.UserNotFound)
+	}
+
+	return u.JSON(w, http.StatusOK, map[string]interface{}{
+		"message": fmt.Sprintf("Password reset email sent to %s", email),
+		"user":    user,
 	})
 }
 

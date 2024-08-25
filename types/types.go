@@ -55,3 +55,12 @@ type User struct {
 	Security  UserSecurity       `json:"security" bson:"security"`
 	Meta      UserMeta           `json:"meta" bson:"meta"`
 }
+
+type ResetPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+type ConfirmResetPasswordRequest struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
