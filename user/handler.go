@@ -150,8 +150,6 @@ func (h *Handler) handlePreResetPassword(w http.ResponseWriter, r *http.Request)
 	/*********************************
 	TODO: Send email to email sent in the payload, this will include a token with a 5 minute expiry
 	linking to /account/reset-password/:token
-
-	NOTES: Remember to remove --token from this response once testing is complete :')
 	*********************************/
 	payload := new(t.ResetPasswordRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
@@ -173,8 +171,9 @@ func (h *Handler) handlePreResetPassword(w http.ResponseWriter, r *http.Request)
 		return u.ERROR(w, ge.Internal)
 	}
 
+	fmt.Println("Token: ", token)
+
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"--token": token,
 		"message": fmt.Sprintf("Password reset email sent to %s", payload.Email),
 	})
 }
