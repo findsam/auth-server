@@ -127,7 +127,7 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 	cookie, err := r.Cookie("refresh")
 	if err != nil {
-		return u.ERROR(w, ge.Internal)
+		return u.ERROR(w, ge.Unauthorized)
 	}
 
 	refresh, err := auth.ValidateJWT(cookie.Value)
@@ -211,7 +211,7 @@ func (h *Handler) handleConfirmResetPassword(w http.ResponseWriter, r *http.Requ
 }
 
 func createAndSetAuthCookies(uid string, w http.ResponseWriter) (string, error) {
-	access, err := auth.CreateJWT(uid, time.Now().Add(time.Minute*10).UTC().Unix())
+	access, err := auth.CreateJWT(uid, time.Now().Add(time.Minute*1).UTC().Unix())
 	if err != nil {
 		return "", u.ERROR(w, ge.Internal)
 	}
