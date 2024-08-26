@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"time"
 
 	"github.com/findsam/food-server/auth"
 	t "github.com/findsam/food-server/types"
@@ -72,4 +73,16 @@ func (s *Store) GetUserByID(ctx context.Context, id string) (*t.User, error) {
 	}
 
 	return u, err
+}
+
+func (s *Store) UpdatePassword(ctx context.Context, uid primitive.ObjectID, p string) error {
+	col := s.db.Database(DbName).Collection(CollName)
+	hashedPassword, err := auth.HashPassword(p)
+
+	if err != nil {
+		return err
+	}
+	_, err = col.UpdateOne(context.TODO(), bson.M{"_id": uid}, bson.M{"$set": bson.M{"password": hashedPassword, "meta.lastUpdate": time.Now().UTC()}})
+
+	return err
 }

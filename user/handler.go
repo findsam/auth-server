@@ -30,7 +30,6 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			r.Post("/user/sign-up", u.MakeHTTPHandlerFunc(h.handleSignUp))
 			r.Post("/user/sign-in", u.MakeHTTPHandlerFunc(h.handleSignIn))
 			r.Get("/user/refresh", u.MakeHTTPHandlerFunc(h.handleRefresh))
-			r.Get("/user/{id}", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleGetUser)))
 			r.Get("/user", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleSelf)))
 		})
 	})
@@ -60,20 +59,6 @@ func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"message": fmt.Sprintf("Please verify your email address: %s", payload.Email),
-	})
-}
-
-func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
-	id := chi.URLParam(r, "id")
-	user, err := h.store.GetUserByID(r.Context(), id)
-
-	if err != nil {
-		return u.ERROR(w, ge.Unauthorized)
-	}
-
-	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"results": []*t.User{user},
-		"message": fmt.Sprintf("Successfully fetched: %s", id),
 	})
 }
 
@@ -179,9 +164,6 @@ func (h *Handler) handlePreResetPassword(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *Handler) handleConfirmResetPassword(w http.ResponseWriter, r *http.Request) error {
-	/*********************************
-	TODO: Implement update functionality for user accounts as this has not yet been done.
-	*********************************/
 	payload := new(t.ConfirmResetPasswordRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
 		return u.ERROR(w, ge.Internal)
@@ -203,9 +185,14 @@ func (h *Handler) handleConfirmResetPassword(w http.ResponseWriter, r *http.Requ
 		return u.ERROR(w, ge.UserNotFound)
 	}
 
+	err = h.store.UpdatePassword(r.Context(), user.ID, payload.Password)
+
+	if err != nil {
+		return u.ERROR(w, ge.Internal)
+	}
+
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"message": fmt.Sprintf("Password reset email sent to %s", email),
-		"user":    user,
+		"message": "Password successfully changed",
 	})
 }
 

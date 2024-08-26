@@ -34,6 +34,7 @@ type UserStore interface {
 	Create(context.Context, RegisterRequest) (primitive.ObjectID, error)
 	GetUserByID(context.Context, string) (*User, error)
 	GetUserByEmail(context.Context, string) (*User, error)
+	UpdatePassword(context.Context, primitive.ObjectID, string) error
 }
 
 type UserSecurity struct {
@@ -43,7 +44,8 @@ type UserSecurity struct {
 }
 
 type UserMeta struct {
-	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
+	CreatedAt  time.Time `json:"createdAt" bson:"createdAt"`
+	LastUpdate time.Time `json:"lastUpdate" bson:"lastUpdate"`
 }
 
 type User struct {

@@ -35,7 +35,8 @@ func NewAccount(p t.RegisterRequest) (*t.User, error) {
 		LastName:  u.CapitalizeFirstLetter(p.LastName),
 		Password:  string(hashedPassword),
 		Meta: t.UserMeta{
-			CreatedAt: time.Now().UTC(),
+			CreatedAt:  time.Now().UTC(),
+			LastUpdate: time.Now().UTC(),
 		},
 		Security: t.UserSecurity{
 			EmailVerified: false,
