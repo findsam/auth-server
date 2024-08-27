@@ -2,10 +2,12 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/findsam/food-server/auth"
 	t "github.com/findsam/food-server/types"
+	u "github.com/findsam/food-server/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -25,7 +27,7 @@ func NewStore(db *mongo.Client) *Store {
 }
 
 func (s *Store) Create(ctx context.Context, b t.RegisterRequest) (primitive.ObjectID, error) {
-	user, err := auth.NewAccount(b)
+	user, err := NewAccount(b)
 
 	if err != nil {
 		return primitive.NilObjectID, err
@@ -84,5 +86,20 @@ func (s *Store) UpdatePassword(ctx context.Context, uid primitive.ObjectID, p st
 	}
 	_, err = col.UpdateOne(context.TODO(), bson.M{"_id": uid}, bson.M{"$set": bson.M{"password": hashedPassword, "meta.lastUpdate": time.Now().UTC()}})
 
+	return err
+}
+
+func (s *Store) UpdateUser(ctx context.Context, b t.User) error {
+	col := s.db.Database(DbName).Collection(CollName)
+
+	result, err := col.UpdateOne(context.TODO(), bson.M{"_id": b.ID}, bson.M{
+		"$set": bson.M{
+			"firstName":       u.CapitalizeFirstLetter(b.FirstName),
+			"lastName":        u.CapitalizeFirstLetter(b.LastName),
+			"email":           b.Email,
+			"meta.lastUpdate": time.Now().UTC(),
+		},
+	})
+	fmt.Println(result.MatchedCount, result.ModifiedCount)
 	return err
 }

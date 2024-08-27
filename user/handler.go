@@ -31,6 +31,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			r.Post("/user/sign-in", u.MakeHTTPHandlerFunc(h.handleSignIn))
 			r.Get("/user/refresh", u.MakeHTTPHandlerFunc(h.handleRefresh))
 			r.Get("/user", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleSelf)))
+			r.Put("/user", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleUpdateUser)))
 		})
 	})
 }
@@ -196,8 +197,25 @@ func (h *Handler) handleConfirmResetPassword(w http.ResponseWriter, r *http.Requ
 	})
 }
 
+func (h *Handler) handleUpdateUser(w http.ResponseWriter, r *http.Request) error {
+	payload := new(t.User)
+	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
+		return u.ERROR(w, ge.Internal)
+	}
+
+	err := h.store.UpdateUser(r.Context(), *payload)
+
+	if err != nil {
+		return u.ERROR(w, ge.Internal)
+	}
+
+	return u.JSON(w, http.StatusOK, map[string]interface{}{
+		"message": "Hitting UPDATE endpoint",
+	})
+}
+
 func createAndSetAuthCookies(uid string, w http.ResponseWriter) (string, error) {
-	access, err := auth.CreateJWT(uid, time.Now().Add(time.Minute*1).UTC().Unix())
+	access, err := auth.CreateJWT(uid, time.Now().Add(time.Minute*5).UTC().Unix())
 	if err != nil {
 		return "", u.ERROR(w, ge.Internal)
 	}
