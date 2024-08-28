@@ -210,7 +210,7 @@ func (h *Handler) handleUpdateUser(w http.ResponseWriter, r *http.Request) error
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"message": "Hitting UPDATE endpoint",
+		"message": "Sucessfully updated user",
 	})
 }
 

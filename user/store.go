@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/findsam/food-server/auth"
@@ -92,7 +91,7 @@ func (s *Store) UpdatePassword(ctx context.Context, uid primitive.ObjectID, p st
 func (s *Store) UpdateUser(ctx context.Context, b t.User) error {
 	col := s.db.Database(DbName).Collection(CollName)
 
-	result, err := col.UpdateOne(context.TODO(), bson.M{"_id": b.ID}, bson.M{
+	_, err := col.UpdateOne(context.TODO(), bson.M{"_id": b.ID}, bson.M{
 		"$set": bson.M{
 			"firstName":       u.CapitalizeFirstLetter(b.FirstName),
 			"lastName":        u.CapitalizeFirstLetter(b.LastName),
@@ -100,6 +99,5 @@ func (s *Store) UpdateUser(ctx context.Context, b t.User) error {
 			"meta.lastUpdate": time.Now().UTC(),
 		},
 	})
-	fmt.Println(result.MatchedCount, result.ModifiedCount)
 	return err
 }
