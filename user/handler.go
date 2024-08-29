@@ -25,13 +25,18 @@ func NewHandler(store t.UserStore) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Group(func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
+			//security requests
 			r.Put("/user/confirm-reset-password", u.MakeHTTPHandlerFunc(h.handleConfirmResetPassword))
 			r.Put("/user/reset-password", u.MakeHTTPHandlerFunc(h.handlePreResetPassword))
+			//generation requests
 			r.Post("/user/sign-up", u.MakeHTTPHandlerFunc(h.handleSignUp))
 			r.Post("/user/sign-in", u.MakeHTTPHandlerFunc(h.handleSignIn))
-			r.Get("/user/refresh", u.MakeHTTPHandlerFunc(h.handleRefresh))
+			//token required requests
 			r.Get("/user", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleSelf)))
 			r.Put("/user", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleUpdateUser)))
+			r.Delete("/user", auth.WithJWT(u.MakeHTTPHandlerFunc(h.handleArchiveUser)))
+			//token generation requests
+			r.Get("/user/refresh", u.MakeHTTPHandlerFunc(h.handleRefresh))
 		})
 	})
 }
@@ -52,7 +57,7 @@ func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 		return u.ERROR(w, ge.EmailExists)
 	}
 
-	_, err = h.store.Create(r.Context(), *payload)
+	err = h.store.Create(r.Context(), *payload)
 
 	if err != nil {
 		return u.ERROR(w, ge.Internal)
@@ -134,8 +139,7 @@ func (h *Handler) handleRefresh(w http.ResponseWriter, r *http.Request) error {
 
 func (h *Handler) handlePreResetPassword(w http.ResponseWriter, r *http.Request) error {
 	/*********************************
-	TODO: Send email to email sent in the payload, this will include a token with a 5 minute expiry
-	linking to /account/reset-password/:token
+	TODO: Send email via sendgrid/mailgun with url to reset via the token geneated in this request.
 	*********************************/
 	payload := new(t.ResetPasswordRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
@@ -157,6 +161,7 @@ func (h *Handler) handlePreResetPassword(w http.ResponseWriter, r *http.Request)
 		return u.ERROR(w, ge.Internal)
 	}
 
+	// for development purposes we'll log the token and put it in manually to save credits on sendgrid.
 	fmt.Println("Token: ", token)
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
@@ -172,7 +177,7 @@ func (h *Handler) handleConfirmResetPassword(w http.ResponseWriter, r *http.Requ
 
 	token, err := auth.ValidateJWT(payload.Token)
 	if err != nil || !token.Valid {
-		return u.ERROR(w, ge.Internal)
+		return u.ERROR(w, ge.ResetExpired)
 	}
 
 	email := auth.ReadJWT(token)
@@ -211,6 +216,20 @@ func (h *Handler) handleUpdateUser(w http.ResponseWriter, r *http.Request) error
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"message": "Sucessfully updated user",
+	})
+}
+
+func (h *Handler) handleArchiveUser(w http.ResponseWriter, r *http.Request) error {
+	uid := r.Context().Value("uid").(string)
+	err := h.store.ArchiveUser(r.Context(), uid)
+
+	if err != nil {
+		return u.ERROR(w, ge.Internal)
+	}
+
+	return u.JSON(w, http.StatusOK, map[string]interface{}{
+		"message":    "Your account has been archieved, you can undo this by logging in with-in 30 days",
+		"isArchived": true,
 	})
 }
 

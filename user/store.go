@@ -25,18 +25,16 @@ func NewStore(db *mongo.Client) *Store {
 	return &Store{db: db}
 }
 
-func (s *Store) Create(ctx context.Context, b t.RegisterRequest) (primitive.ObjectID, error) {
+func (s *Store) Create(ctx context.Context, b t.RegisterRequest) error {
 	user, err := NewAccount(b)
 
 	if err != nil {
-		return primitive.NilObjectID, err
+		return err
 	}
 
 	col := s.db.Database(DbName).Collection(CollName)
-	newUser, err := col.InsertOne(ctx, user)
-
-	id := newUser.InsertedID.(primitive.ObjectID)
-	return id, err
+	_, err = col.InsertOne(ctx, user)
+	return err
 }
 
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (*t.User, error) {
@@ -55,9 +53,9 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*t.User, erro
 	return u, err
 }
 
-func (s *Store) GetUserByID(ctx context.Context, id string) (*t.User, error) {
+func (s *Store) GetUserByID(ctx context.Context, uid string) (*t.User, error) {
 	col := s.db.Database(DbName).Collection(CollName)
-	oID, err := primitive.ObjectIDFromHex(id)
+	oid, err := primitive.ObjectIDFromHex(uid)
 
 	if err != nil {
 		return nil, err
@@ -66,7 +64,7 @@ func (s *Store) GetUserByID(ctx context.Context, id string) (*t.User, error) {
 	u := new(t.User)
 
 	err = col.FindOne(ctx, bson.M{
-		"_id": oID,
+		"_id": oid,
 	}).Decode(u)
 
 	if primitive.ObjectID.IsZero(u.ID) {
@@ -99,5 +97,17 @@ func (s *Store) UpdateUser(ctx context.Context, b t.User) error {
 			"meta.lastUpdate": time.Now().UTC(),
 		},
 	})
+	return err
+}
+
+func (s *Store) ArchiveUser(ctx context.Context, uid string) error {
+	col := s.db.Database(DbName).Collection(CollName)
+	oid, err := primitive.ObjectIDFromHex(uid)
+
+	if err != nil {
+		return err
+	}
+	_, err = col.UpdateOne(context.TODO(), bson.M{"_id": oid}, bson.M{"$set": bson.M{"meta.isArchived": true, "meta.lastUpdate": time.Now().UTC()}})
+
 	return err
 }

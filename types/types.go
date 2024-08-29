@@ -31,11 +31,12 @@ type LoginRequest struct {
 }
 
 type UserStore interface {
-	Create(context.Context, RegisterRequest) (primitive.ObjectID, error)
+	Create(context.Context, RegisterRequest) error
 	GetUserByID(context.Context, string) (*User, error)
 	GetUserByEmail(context.Context, string) (*User, error)
 	UpdatePassword(context.Context, primitive.ObjectID, string) error
 	UpdateUser(context.Context, User) error
+	ArchiveUser(context.Context, string) error
 }
 
 type UserSecurity struct {
@@ -47,6 +48,7 @@ type UserSecurity struct {
 type UserMeta struct {
 	CreatedAt  time.Time `json:"createdAt" bson:"createdAt"`
 	LastUpdate time.Time `json:"lastUpdate" bson:"lastUpdate"`
+	IsArchived bool      `json:"isArchived" bson:"isArchived"`
 }
 
 type User struct {
@@ -66,4 +68,11 @@ type ResetPasswordRequest struct {
 type ConfirmResetPasswordRequest struct {
 	Token    string `json:"token"`
 	Password string `json:"password"`
+}
+
+type UpdateUserRequest struct {
+	ID        primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	FirstName string             `json:"firstName" bson:"firstName"`
+	LastName  string             `json:"lastName" bson:"lastName"`
+	Email     string             `json:"email" bson:"email"`
 }

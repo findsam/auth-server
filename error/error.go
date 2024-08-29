@@ -28,4 +28,5 @@ var (
 	EmailExists          = New("A user with that email already exists", http.StatusBadRequest)
 	Unauthorized         = New("Unauthorized request", http.StatusUnauthorized)
 	UserNotFound         = New("No user was found", http.StatusBadRequest)
+	ResetExpired         = New("Reset token has expired", http.StatusBadRequest)
 )
