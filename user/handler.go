@@ -94,7 +94,7 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 		return u.ERROR(w, ge.Internal)
 	}
 
-	if user == nil {
+	if user == nil || user.Meta.IsArchived {
 		return u.ERROR(w, ge.UserNotFound)
 	}
 
@@ -228,7 +228,7 @@ func (h *Handler) handleArchiveUser(w http.ResponseWriter, r *http.Request) erro
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"message":    "Your account has been archieved, you can undo this by logging in with-in 30 days",
+		"message":    "Your account has been archieved",
 		"isArchived": true,
 	})
 }
