@@ -47,13 +47,13 @@ func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 		return u.ERROR(w, ge.Internal)
 	}
 
-	existingUser, err := h.store.GetUserByEmail(r.Context(), payload.Email)
+	user, err := h.store.GetUserByEmail(r.Context(), payload.Email)
 
 	if err != nil {
 		return u.ERROR(w, ge.Internal)
 	}
 
-	if existingUser != nil {
+	if user != nil {
 		return u.ERROR(w, ge.EmailExists)
 	}
 
@@ -64,7 +64,7 @@ func (h *Handler) handleSignUp(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"message": fmt.Sprintf("Please verify your email address: %s", payload.Email),
+		"message": "User successfully created",
 	})
 }
 
@@ -78,7 +78,6 @@ func (h *Handler) handleSelf(w http.ResponseWriter, r *http.Request) error {
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"results": []*t.User{user},
-		"message": fmt.Sprintf("Successfully fetched: %s", uid),
 	})
 }
 
@@ -111,7 +110,6 @@ func (h *Handler) handleSignIn(w http.ResponseWriter, r *http.Request) error {
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"results": []*t.User{user},
 		"token":   access,
-		"message": fmt.Sprintf("Successfully logged in as: %s", payload.Email),
 	})
 }
 
@@ -228,7 +226,7 @@ func (h *Handler) handleArchiveUser(w http.ResponseWriter, r *http.Request) erro
 	}
 
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
-		"message":    "Your account has been archieved",
+		"message":    "User successfully archived",
 		"isArchived": true,
 	})
 }
