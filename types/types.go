@@ -35,7 +35,7 @@ type UserStore interface {
 	GetUserByID(context.Context, string) (*User, error)
 	GetUserByEmail(context.Context, string) (*User, error)
 	UpdatePassword(context.Context, primitive.ObjectID, string) error
-	UpdateUser(context.Context, User) error
+	UpdateUser(context.Context, UpdateUserRequest) error
 	ArchiveUser(context.Context, string) error
 }
 

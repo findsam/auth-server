@@ -201,7 +201,7 @@ func (h *Handler) handleConfirmResetPassword(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *Handler) handleUpdateUser(w http.ResponseWriter, r *http.Request) error {
-	payload := new(t.User)
+	payload := new(t.UpdateUserRequest)
 	if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
 		return u.ERROR(w, ge.Internal)
 	}
