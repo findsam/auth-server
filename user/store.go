@@ -86,7 +86,7 @@ func (s *Store) UpdatePassword(ctx context.Context, uid primitive.ObjectID, p st
 	return err
 }
 
-func (s *Store) UpdateUser(ctx context.Context, b t.User) error {
+func (s *Store) UpdateUser(ctx context.Context, b t.UpdateUserRequest) error {
 	col := s.db.Database(DbName).Collection(CollName)
 
 	_, err := col.UpdateOne(context.TODO(), bson.M{"_id": b.ID}, bson.M{
