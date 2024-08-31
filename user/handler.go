@@ -225,6 +225,15 @@ func (h *Handler) handleArchiveUser(w http.ResponseWriter, r *http.Request) erro
 		return u.ERROR(w, ge.Internal)
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh",
+		Value:    "",
+		Path:     "/users/user/refresh",
+		MaxAge:   -1,
+		Secure:   true,
+		HttpOnly: true,
+	})
+
 	return u.JSON(w, http.StatusOK, map[string]interface{}{
 		"message":    "User successfully archived",
 		"isArchived": true,
