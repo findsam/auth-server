@@ -89,7 +89,13 @@ func (s *Store) UpdatePassword(ctx context.Context, uid primitive.ObjectID, p st
 func (s *Store) UpdateUser(ctx context.Context, b t.UpdateUserRequest) error {
 	col := s.db.Database(DbName).Collection(CollName)
 
-	_, err := col.UpdateOne(context.TODO(), bson.M{"_id": b.ID}, bson.M{
+	oid, err := primitive.ObjectIDFromHex(b.ID)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = col.UpdateOne(context.TODO(), bson.M{"_id": oid}, bson.M{
 		"$set": bson.M{
 			"firstName":       u.CapitalizeFirstLetter(b.FirstName),
 			"lastName":        u.CapitalizeFirstLetter(b.LastName),

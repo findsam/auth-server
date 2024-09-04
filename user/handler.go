@@ -206,6 +206,8 @@ func (h *Handler) handleUpdateUser(w http.ResponseWriter, r *http.Request) error
 		return u.ERROR(w, ge.Internal)
 	}
 
+	payload.ID = r.Context().Value("uid").(string)
+
 	err := h.store.UpdateUser(r.Context(), *payload)
 
 	if err != nil {
